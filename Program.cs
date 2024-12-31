@@ -1,0 +1,260 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace IdleClickerDev
+{
+    internal class Program
+    {
+        //Classe com os valores dos itens
+        class valoresItem
+        {
+            public int valorClick { get; set; }
+            public int valorSeg { get; set; }
+            public int valorAutomatico { get; set; }
+            public int valorSegAutomatico { get; set; }
+            public int valorMoedasAutomaticas { get; set; }
+            public int valorSA { set; get; }
+
+            public valoresItem()
+            {
+                valorClick = 50;
+                valorSeg = 20;
+                valorAutomatico = 500;
+                valorSegAutomatico = 100;
+                valorMoedasAutomaticas = 100;
+            }
+        }
+        //Fim Classe Valores
+        //Classe que tem as variaveis e com as funcionalidades do jogo
+        class funcionalidadesJogo
+        {
+
+            public int click { get; set; }
+            public double moedas { get; set; }
+            public double seg { get; set; }
+            public double segSoma { get; set; }
+            public int segMoedaClick { get; set; }
+            public int bonus { get; set; }
+            public bool automatico { get; set; }
+            public bool ativado { get; set; }
+            public double moedasAutomaticas { get; set; }
+            public double segSomaAutomatico {  get; set; }
+            public double segAutomatico { get; set; }
+            public int segAut { get; set; }
+            public int strSG { get; set; }
+            public funcionalidadesJogo()
+            {
+                click = 10000;
+                moedas = 0;
+                seg = 2;
+                segSoma = seg * 1000;
+                segMoedaClick = Convert.ToInt32(segSoma);
+                bonus = 0;
+                automatico = true;
+                ativado = true;
+                moedasAutomaticas = 1;
+                segAutomatico = 1000;
+                segSomaAutomatico = segAutomatico * 1000;
+                segAut = Convert.ToInt32(segSomaAutomatico);
+                strSG = segAut / 1000;
+        }
+
+            public void ganhaPao()
+            {
+                moedas += click;
+            }
+            public void ganhaAutomatico()
+            {
+                moedas += ((segAut * moedasAutomaticas)/1000);
+            }
+        }
+        //Fim classse do jogo
+        //classe para o XP do jogador
+        class xp
+        {
+            public int pontos { get; set; }
+            public int xpAtual { get; set; }
+            public int xpNecessario { get; set; }
+            public int xpBase { get; set; }
+            public int nivelAtual { get; set; }
+            public int nivelProximo { get; set; }
+            public string strAcao { get; set; }
+
+            public xp()
+            {
+                pontos = 1;
+                nivelAtual = 0;
+                nivelProximo = 1;
+                xpAtual = 0;
+                xpBase = 100;
+                xpNecessario = xpBase * nivelProximo;
+                strAcao = "Nenhuma Ação";
+            }
+
+            public void ganhaXP()
+            {
+                xpAtual += (pontos + nivelAtual);
+
+                if (xpAtual >= xpNecessario)
+                {
+                    xpAtual = 0;
+                    nivelProximo++;
+                    nivelAtual++;
+                    xpNecessario = xpBase * nivelProximo;
+                    strAcao = $"Subiu De Nivel {nivelAtual}";
+                }
+            }
+        }
+        //Fim classe XP
+        //Main Principal
+        static async Task Main()
+        {
+            funcionalidadesJogo fJogo = new funcionalidadesJogo();
+            valoresItem vItem = new valoresItem();
+            xp xpMain = new xp();
+            bool mainRodando = true;
+            Task.Run(() => Automatizador(fJogo, fJogo.automatico));
+
+            while (mainRodando)
+            {
+                Console.Clear();
+                Console.WriteLine("Idle Clicker Dev");
+                Console.WriteLine($"Nivel: [{xpMain.nivelAtual}]  {xpMain.xpAtual} | {xpMain.xpNecessario}  [{xpMain.nivelProximo}]");
+                Console.WriteLine($"Bonus Por Nivel: {fJogo.bonus} Moedas");
+                Console.WriteLine($"Ação: {xpMain.strAcao}");
+                Console.WriteLine($"Moedas: {fJogo.moedas}");
+                Console.WriteLine($"Segundos Por Click Para Ganhar Moedas: {fJogo.seg}");
+                Console.WriteLine($"Automatico: {(fJogo.ativado ? "Ativado":"Desativado")}");
+                if (fJogo.automatico == true) { Console.WriteLine($"Moedas Ganhas Automaticamente: {fJogo.moedasAutomaticas}"); Console.WriteLine($"Segundos Para Ganhos De Moedas Automaticos: {fJogo.strSG}"); }
+                Console.WriteLine($"Moedas Por Click: {fJogo.click}\n");
+                Console.WriteLine("Digite 'UPGRADE' Para Acessar Menu De Melhorias!");
+                if (fJogo.automatico == true) { Console.WriteLine("Digite 'A' Para Ativar||Desativar O Click Automatico"); }
+                Console.WriteLine("Digite 'X' Para Fechar O Jogo!");
+                Console.Write("Pressione A Tecla ENTER Para Ganhar Moedas: ");
+                string ganhaPao = Console.ReadLine().ToLower();
+                switch (ganhaPao)
+                {
+                    case "upgrade":
+                        Upgrade(fJogo, vItem);
+                        break;
+                    case "x":
+                        mainRodando = false;
+                        Sair();
+                        break;
+                    case "a":
+                        if(fJogo.automatico == false) { }
+                        else { fJogo.ativado = !fJogo.ativado; }
+                        break;
+                    default:
+                        Thread.Sleep(fJogo.segMoedaClick);
+                        fJogo.ganhaPao();
+                        xpMain.ganhaXP();
+                        if(xpMain.nivelAtual >= 1) { fJogo.moedas += (fJogo.bonus = xpMain.nivelAtual); }
+                        break;
+                }
+            }
+        }
+        //Fim Main
+        //Função para aceesar ao menu do upgrade
+        static void Upgrade(funcionalidadesJogo fJogo, valoresItem vItem)
+        {
+            bool upgradeRodando = true; string strAcao = "Nenhuma Ação";
+            while (upgradeRodando)
+            {
+                Console.Clear();
+                Console.WriteLine("Idle Clicker Dev");
+                Console.WriteLine($"Moedas: {fJogo.moedas}");
+                Console.WriteLine($"Click: {fJogo.click}");
+                Console.WriteLine($"Segundos Por Click: {fJogo.seg}");
+                Console.WriteLine($"Automatico: {(fJogo.ativado ? "Ativado" : "Desativado")}");
+                if (fJogo.automatico == true) { Console.WriteLine($"Moedas Ganhas Automaticamente: {fJogo.moedasAutomaticas}"); Console.WriteLine($"Segundos Para Ganhos De Moedas Automaticos: {fJogo.strSG}"); }
+                Console.WriteLine($"Ação: {strAcao}\n");
+                Console.WriteLine("Preços Das Melhorias: ");
+                Console.WriteLine($"Upgrade Para Click: {vItem.valorClick}");
+                Console.WriteLine($"Diminuir Tempo De Espera Para Ganhar Moeda: {vItem.valorSeg}");
+                if(fJogo.automatico == false) { Console.WriteLine($"Comprar Click Automatico: {vItem.valorAutomatico}"); }
+                else
+                {
+                    Console.WriteLine($"Aumentar Moedas Ganhas Automaticamente: {vItem.valorMoedasAutomaticas}"); 
+                    Console.WriteLine($"Aumentar Segundos Para Ganhos De Moedas Automaticos: {vItem.valorSegAutomatico}");
+                }
+                Console.WriteLine("\nC - Click\nT - Tempo\nA - Automatico");
+                if(fJogo.automatico == true) { Console.WriteLine("M - Moedas Do Click Automatico"); Console.WriteLine("S = Segundos Do Click Automatico"); }
+                Console.WriteLine("V - Voltar Ao Menu");
+                Console.Write("Qual Deseja Melhorar: ");
+                string opcao = Console.ReadLine().ToLower();
+                switch (opcao)
+                {
+                    case "c":
+                        if (fJogo.moedas >= vItem.valorClick) { fJogo.moedas -= vItem.valorClick; fJogo.click += 1 + (fJogo.click / 2);  vItem.valorClick *= 2; strAcao = "Click Melhorado"; }
+                        else { strAcao = "Moedas Insuficiente"; }
+                        break;
+                    case "t":
+                        if (fJogo.seg <= 0)
+                        {
+                            strAcao = "Os Segundos Já Estão No Máximo";
+                        }
+                        else
+                        {
+                            if (fJogo.moedas >= vItem.valorSeg) { fJogo.moedas -= vItem.valorSeg; fJogo.segMoedaClick -= 150; vItem.valorSeg *= 2; strAcao = "Tempo Diminuido"; fJogo.seg -= 0.15; if (fJogo.seg <= 0) { fJogo.seg = 0; fJogo.segMoedaClick = 0; } }
+                            else { strAcao = "Moedas Insuficiente"; }
+                        }
+                        break;
+                    case "a":
+                        if (fJogo.moedas >= vItem.valorAutomatico)
+                        {
+                            if (fJogo.automatico != true) { fJogo.moedas -= vItem.valorAutomatico; fJogo.automatico = true; strAcao = "Click Automatico Comprado"; fJogo.ativado = true; }
+                            else { strAcao = "Você Já Possui Esse Item"; }
+                        }
+                        else { strAcao = "Moedas Insuficiente"; }
+                        break;
+                    case "m":
+                        if (fJogo.moedas >= vItem.valorMoedasAutomaticas)
+                        {
+                            if (fJogo.automatico == true) { fJogo.moedas -= vItem.valorMoedasAutomaticas; fJogo.moedasAutomaticas += 1; vItem.valorMoedasAutomaticas *= 2; strAcao = "Moedas Automaticas Compradas"; }
+                            else { strAcao = "Você Ainda Não Possui O Automatico"; }
+                        }
+                        else { strAcao = "Moedas Insuficiente"; }
+                        break;
+                    case "s":
+                        if (fJogo.moedas >= vItem.valorSegAutomatico)
+                        {
+                            if (fJogo.automatico == true) { fJogo.moedas -= vItem.valorSegAutomatico; fJogo.segAut += 250; vItem.valorSegAutomatico *= 2; strAcao = "Segundos Do Click Automatico Aumentado"; }
+                            else { strAcao = "Você Ainda Não Possui O Automatico"; }
+                        }
+                        else { strAcao = "Moedas Insuficiente"; }
+                        break;
+                    case "v":
+                        return;
+                    default:
+                        break;
+                }
+            }
+        }
+        //Fim upgrade
+        //Funçao para sair do jogo
+        static void Sair()
+        {
+            Console.WriteLine("\nObrigado Por Jogar Idle Clicker Dev!");
+        }
+        //Fim sair do jogo
+        //~Funçaõ que permite gamhar moedas automaticas
+        static async Task Automatizador(funcionalidadesJogo fJogo, bool automatico)
+        {
+            while (true)
+            {
+                if (fJogo.ativado)
+                {
+                    fJogo.moedas = ((fJogo.moedasAutomaticas * fJogo.segAut) / 1000);
+                }
+                await Task.Delay(fJogo.segAut);
+            }
+        }
+
+    }
+}
